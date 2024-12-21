@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<script>
+function refreshAfterDelete(evt) {
+    if (evt.detail.successful) {
+        window.location.reload();
+    }
+}
+</script>
+
+<h1>Stories</h1>
+<div class="story-grid" hx-trigger="storyDeleted from:body" hx-swap="outerHTML" hx-get="/">
+    {% if stories %}
+        {% for story in stories %}
+        <article class="story-card">
+            <div class="story-card-content" onclick="window.location.href='/stories/{{ story.id.id }}/edit'">
+                <h2>{{ story.title }}</h2>
+                <p>{{ story.prompt }}</p>
+            </div>
+            <button class="delete-btn"
+                    hx-delete="/api/stories/{{ story.id.id }}"
+                    hx-target="closest .story-card"
+                    hx-swap="outerHTML"
+                    hx-confirm="Are you sure you want to delete this story?"
+                    _="on htmx:afterRequest if event.detail.successful send storyDeleted to body">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+            </button>
+        </article>
+        {% endfor %}
+    {% else %}
+        <article class="story-card create-story-card" onclick="window.location.href='/story-builder'">
+            <div class="create-story-content">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                <h2>Create Your First Story</h2>
+                <p>Click here to start writing with AI</p>
+            </div>
+        </article>
+    {% endif %}
+</div>
+{% endblock %} 

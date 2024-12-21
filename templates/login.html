@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h1>Login</h1>
+    <p>Click below to login with the temporary development account:</p>
+    <form method="get" action="{{ url_for('login') }}">
+        <button type="submit">Login as Test User</button>
+    </form>
+</div>
+{% endblock %} 

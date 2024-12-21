@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    container_name: storymode_db
+    environment:
+      - SURREAL_USER=${SURREAL_USER}
+      - SURREAL_PASS=${SURREAL_PASS}
+      - SURREAL_LOG=trace
+    ports:
+      - "8000:8000"
+    command: start file:/data/database.db
+    volumes:
+      - ./data:/data
+
+volumes:
+  data:
+    driver: local

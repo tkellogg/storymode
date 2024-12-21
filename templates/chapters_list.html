@@ -1,0 +1,30 @@
+{% for chapter in chapters %}
+<div class="chapter-item" 
+     hx-get="/api/stories/{{ story_id }}/chapters/{{ chapter.chapter_number }}"
+     hx-target="#chapter-content"
+     hx-trigger="click"
+     hx-swap="innerHTML"
+     hx-indicator="#loading"
+     hx-push-url="false"
+>
+    <span>Chapter {{ chapter.chapter_number }}</span>
+</div>
+{% endfor %}
+{% if chapters|length < num_chapters %}
+<button class="next-chapter-btn"
+        hx-post="/api/stories/{{ story_id }}/chapters"
+        hx-target="#chapter-content"
+        hx-swap="innerHTML"
+        hx-vals='{"chapter_number": {{ chapters|length + 1 }}}'
+        hx-indicator=".generate-indicator"
+        _="on htmx:afterOnLoad 
+           wait 10ms
+           fetch /api/stories/{{ story_id }}/chapters-list as html
+           put it into .chapters-list">
+    <span class="button-text">+ Generate Chapter {{ (chapters|length + 1) }}</span>
+    <div class="generate-indicator">
+        <div class="loading-spinner"></div>
+        <span>Generating...</span>
+    </div>
+</button>
+{% endif %} 

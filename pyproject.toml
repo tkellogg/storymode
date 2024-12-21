@@ -1,0 +1,13 @@
+[project]
+name = "storymode"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.42.0",
+    "flask[async]>=3.1.0",
+    "nest-asyncio>=1.6.0",
+    "python-dotenv>=1.0.1",
+    "surrealdb>=0.4.1",
+]
