@@ -77,5 +77,42 @@ document.addEventListener('click', function(e) {
         document.getElementById('current-chapter-title').textContent = `Chapter ${chapterNumber}`;
     }
 });
+
+function generateAudio() {
+    const generateBtn = document.getElementById('generate-audio-btn');
+    const loadingEl = document.getElementById('audio-loading');
+    
+    generateBtn.classList.add('hidden');
+    loadingEl.classList.remove('hidden');
+    
+    // Get current chapter number from title
+    const chapterNumber = document.getElementById('current-chapter-title').textContent.match(/\d+/)[0];
+    
+    fetch(`/api/stories/{{ story.id.id }}/chapters/${chapterNumber}/audio`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+            generateBtn.classList.remove('hidden');
+            return;
+        }
+        // Reload the chapter content to show the audio player
+        const chapterContent = document.getElementById('chapter-content');
+        fetch(`/api/stories/{{ story.id.id }}/chapters/${chapterNumber}`)
+            .then(response => response.text())
+            .then(html => {
+                chapterContent.innerHTML = html;
+            });
+    })
+    .catch(error => {
+        alert('Error generating audio: ' + error);
+        generateBtn.classList.remove('hidden');
+    })
+    .finally(() => {
+        loadingEl.classList.add('hidden');
+    });
+}
 </script>
 {% endblock %} 

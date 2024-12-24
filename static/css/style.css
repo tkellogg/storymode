@@ -600,4 +600,73 @@ input[type="number"]:focus {
 }
 .htmx-request.htmx-indicator {
     display: block;
+}
+
+/* Chapter header */
+.chapter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.chapter-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#generate-audio-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-color);
+    color: var(--accent-color);
+    border: 2px solid var(--accent-color);
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#generate-audio-btn:hover {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+#generate-audio-btn svg {
+    opacity: 0.8;
+}
+
+#audio-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+#audio-loading .loading-spinner {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+/* Audio player styling */
+audio {
+    height: 32px;
+    border-radius: 16px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+audio::-webkit-media-controls-panel {
+    background-color: var(--card-bg);
+}
+
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display {
+    color: var(--text-color);
 } 

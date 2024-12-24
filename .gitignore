@@ -1,4 +1,5 @@
 .env
 data/
+user_data/
 __pycache__/
 *.py[co]
