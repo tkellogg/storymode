@@ -13,10 +13,10 @@ async def get_chapter(db, story_id, chapter_number):
     chapter = await db.query('''
         SELECT 
             content,
-            audio_data ?? false as has_audio
+            audio_data != NULL as has_audio
         FROM chapter
         WHERE story = type::thing('story', $story_id) 
-        AND chapter_number = $chapter_number
+        AND chapter_number = type::int($chapter_number)
         LIMIT 1;
     ''', {
         'story_id': story_id,
@@ -101,6 +101,7 @@ async def generate_chapter_content(story_data, chapter_number, prev_chapter_cont
         system=(
             "You are a creative storyteller. Write engaging, vivid stories based on user prompts. "
             "Write only the story content, no other text. "
+            "Do not include any chapter numbers, titles, or other metadata in the output. "
             f"Each chapter should be approximately {story_data['words_per_chapter']} words."
         ),
         messages=[
@@ -136,7 +137,7 @@ async def save_chapter(db, story_id, chapter_number, content):
     result = await db.query('''
         CREATE chapter SET
             story = type::thing('story', $story_id),
-            chapter_number = $chapter_number,
+            chapter_number = type::int($chapter_number),
             content = $content,
             created_at = $now,
             updated_at = $now

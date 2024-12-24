@@ -107,15 +107,12 @@ async def generate_chapter_endpoint(story_id):
     chapter_number = int(request.form.get("chapter_number", 1))
 
     try:
-        content, error = await chapter.generate_new_chapter(db, story_id, chapter_number)
-        if error:
-            return f"<div class='error'>{error}</div>", 500
+        content = await chapter.generate_new_chapter(db, story_id, chapter_number)
         return content
 
     except Exception as e:
         print("Error in generate_chapter_endpoint:", e)
-        traceback.print_exc()
-        return f"<div class='error'>Error generating chapter: {str(e)}</div>", 500
+        raise
 
 @app.route("/api/stories/<story_id>/chapters/<int:chapter_number>/audio", methods=["POST"])
 async def generate_chapter_audio_endpoint(story_id, chapter_number):
