@@ -101,7 +101,7 @@ async def generate_chapter_content(story_data, chapter_number, prev_chapter_cont
         system=(
             "You are a creative storyteller. Write engaging, vivid stories based on user prompts. "
             "Write only the story content, no other text. "
-            "Do not include any chapter numbers, titles, or other metadata in the output. "
+            "Write in markdown format. Start the chapter with the chapter title in bold. "
             f"Each chapter should be approximately {story_data['words_per_chapter']} words."
         ),
         messages=[
