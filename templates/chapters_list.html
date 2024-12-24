@@ -14,7 +14,11 @@
     <button hx-post="/api/stories/{{ story_id }}/chapters"
             hx-vals='{"chapter_number": {{ chapters|length + 1 }}}'
             hx-target="#chapter-content"
-            class="generate-chapter-btn">
+            class="generate-chapter-btn"
+            _="on htmx:afterOnLoad 
+               wait 10ms
+               fetch /api/stories/{{ story_id }}/chapters-list
+               put the result into .chapters-list">
         <span class="button-text">Generate Chapter {{ chapters|length + 1 }}</span>
         <div class="loading-indicator htmx-indicator">
             <div class="spinner"></div>
