@@ -131,7 +131,13 @@ async def generate_chapter_audio_endpoint(story_id, chapter_number):
     storage.save_chapter_audio(story_id, chapter_number, audio_bytes)
     print(f"Saved audio file for chapter {chapter_number}")
     
-    return jsonify({"success": True})
+    # Return the audio player HTML
+    return render_template_string('''
+        <audio id="chapter-audio" controls>
+            <source src="/api/stories/{{ story_id }}/chapters/{{ chapter_number }}/audio" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+    ''', story_id=story_id, chapter_number=chapter_number)
 
 @app.route("/api/stories/<story_id>/chapters/<int:chapter_number>/audio")
 async def get_chapter_audio_endpoint(story_id, chapter_number):
@@ -201,7 +207,12 @@ async def get_chapter_endpoint(story_id, chapter_number):
                     Your browser does not support the audio element.
                 </audio>
             {% else %}
-                <button id="generate-audio-btn" onclick="generateAudio()">
+                <button id="generate-audio-btn" 
+                        hx-post="/api/stories/{{ story_id }}/chapters/{{ chapter_number }}/audio"
+                        hx-swap="outerHTML"
+                        _="on htmx:beforeRequest 
+                           add .hidden to <button#generate-audio-btn/>
+                           remove .hidden from <div#audio-loading/>">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                         <path fill="none" d="M0 0h24v24H0z"/>
                         <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
