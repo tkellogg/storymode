@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from anthropic import Anthropic
 from dotenv import load_dotenv
+import storage
 
 load_dotenv()
 
@@ -10,10 +11,10 @@ anthropic = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 async def get_chapter(db, story_id, chapter_number):
     """Get a single chapter's content and audio status."""
+    # Check if chapter exists in database
     chapter = await db.query('''
         SELECT 
-            content,
-            audio_data != NULL as has_audio
+            audio_mimetype ?? false as has_audio
         FROM chapter
         WHERE story = type::thing('story', $story_id) 
         AND chapter_number = type::int($chapter_number)
@@ -27,10 +28,16 @@ async def get_chapter(db, story_id, chapter_number):
         print(f"No chapter found for {story_id} #{chapter_number}")
         raise ValueError(f"Chapter not found: {story_id} #{chapter_number}")
 
+    # Get content from filesystem
+    content = storage.get_chapter_text(story_id, chapter_number)
+    if not content:
+        raise ValueError(f"Chapter content not found: {story_id} #{chapter_number}")
+
     result = chapter[0]["result"][0]
+    result["content"] = content
     print(f"Chapter {chapter_number} data:", {
         'has_audio': result.get('has_audio'),
-        'content_length': len(result.get('content', '')) if result.get('content') else 0,
+        'content_length': len(content),
     })
     # Ensure has_audio is a proper boolean
     result["has_audio"] = bool(result.get("has_audio", False))
@@ -83,7 +90,11 @@ async def get_previous_chapter(db, story_id, chapter_number):
     if chapter_number <= 1:
         return None
         
-    return await get_chapter(db, story_id, chapter_number - 1)
+    try:
+        prev_chapter = await get_chapter(db, story_id, chapter_number - 1)
+        return prev_chapter["content"] if prev_chapter else None
+    except ValueError:
+        return None
 
 async def generate_chapter_content(story_data, chapter_number, prev_chapter_content=None):
     """Generate chapter content using Claude."""
@@ -132,8 +143,13 @@ async def generate_title(prompt, first_chapter):
     return title_message.content[0].text.strip('" ')
 
 async def save_chapter(db, story_id, chapter_number, content):
-    """Save a new chapter to the database."""
+    """Save a new chapter to the database and filesystem."""
     now = datetime.utcnow().isoformat()
+    
+    # Save content to filesystem
+    storage.save_chapter_text(story_id, chapter_number, content)
+    
+    # Create chapter record in database (with empty content to satisfy schema)
     result = await db.query('''
         CREATE chapter SET
             story = type::thing('story', $story_id),
@@ -145,12 +161,13 @@ async def save_chapter(db, story_id, chapter_number, content):
     ''', {
         'story_id': story_id,
         'chapter_number': chapter_number,
-        'content': content,
+        'content': '',  # Empty string to satisfy schema
         'now': now
     })
 
-    if not result or not result[0]["result"]:
-        raise ValueError("Failed to save chapter")
+    if not result or result[0]["status"] == "ERR":
+        raise ValueError("Failed to save chapter: " + str(result[0].get("result", "Unknown error")))
+    print("Saved chapter to database", result[0])
 
     return result[0]["result"][0]
 
