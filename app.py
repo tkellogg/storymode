@@ -221,5 +221,59 @@ async def get_chapter_endpoint(story_id, chapter_number):
     chapter_number=chapter_number
     )
 
+@app.route("/api/stories/<story_id>/generate-all", methods=["POST"])
+async def generate_all_endpoint(story_id):
+    try:
+        # Get story details
+        story_data = await story.get_story(db, story_id)
+        if not story_data:
+            return "Story not found", 404
+
+        # Generate all remaining chapters
+        chapters, num_chapters = await chapter.get_chapters_list(db, story_id)
+        current_chapters = len(chapters)
+        
+        for chapter_num in range(current_chapters + 1, num_chapters + 1):
+            print(f"Generating chapter {chapter_num}")
+            content = await chapter.generate_new_chapter(db, story_id, chapter_num)
+            
+            # Generate audio for this chapter
+            print(f"Generating audio for chapter {chapter_num}")
+            audio_bytes = await audiogen.generate_audio(content)
+            storage.save_chapter_audio(story_id, chapter_num, audio_bytes)
+        
+        # Generate audio for any existing chapters that don't have it
+        for chapter_num in range(1, current_chapters + 1):
+            if not storage.has_chapter_audio(story_id, chapter_num):
+                print(f"Generating missing audio for chapter {chapter_num}")
+                content = storage.get_chapter_text(story_id, chapter_num)
+                audio_bytes = await audiogen.generate_audio(content)
+                storage.save_chapter_audio(story_id, chapter_num, audio_bytes)
+        
+        # Return the last chapter's content
+        content = storage.get_chapter_text(story_id, num_chapters)
+        has_audio = storage.has_chapter_audio(story_id, num_chapters)
+        
+        return render_template_string('''
+            <div class="chapter-controls">
+                {% if has_audio %}
+                    <audio id="chapter-audio" controls>
+                        <source src="/api/stories/{{ story_id }}/chapters/{{ chapter_number }}/audio" type="audio/mp3">
+                        Your browser does not support the audio element.
+                    </audio>
+                {% endif %}
+            </div>
+            <div class="chapter-content">{{ content | safe }}</div>
+        ''', 
+        content=content,
+        has_audio=has_audio,
+        story_id=story_id,
+        chapter_number=num_chapters
+        )
+
+    except Exception as e:
+        print("Error in generate_all_endpoint:", e)
+        raise
+
 if __name__ == "__main__":
     app.run(debug=True) 
