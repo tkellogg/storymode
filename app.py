@@ -19,22 +19,10 @@ nest_asyncio.apply()
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev")
 
-# Flag to track if migration has run
-_migration_has_run = False
-
 def get_db():
     if not hasattr(g, '_database'):
         g._database = db
     return g._database
-
-@app.before_request
-async def run_migrations():
-    """Run storage migrations before first request."""
-    global _migration_has_run
-    if not _migration_has_run:
-        print("Running storage migrations...")
-        await migrate_storage.migrate_all_chapters(db)
-        _migration_has_run = True
 
 @app.teardown_appcontext
 def close_db(error):
