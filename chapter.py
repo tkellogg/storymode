@@ -96,14 +96,28 @@ async def get_previous_chapter(db, story_id, chapter_number):
     except ValueError:
         return None
 
-async def generate_chapter_content(story_data, chapter_number, prev_chapter_content=None):
+async def get_all_previous_chapters(db, story_id, current_chapter):
+    """Get the content of all previous chapters."""
+    chapters = []
+    for i in range(1, current_chapter):
+        try:
+            chapter = await get_chapter(db, story_id, i)
+            chapters.append(chapter["content"])
+        except ValueError:
+            print(f"Warning: Could not find chapter {i}")
+            continue
+    return chapters
+
+async def generate_chapter_content(story_data, chapter_number, prev_chapters):
     """Generate chapter content using Claude."""
     chapter_prompt = f"Chapter {chapter_number} of {story_data['num_chapters']}"
     
     if chapter_number == 1:
         chapter_prompt += f"\n\nStory prompt: {story_data['prompt']}"
-    elif prev_chapter_content:
-        chapter_prompt += f"\n\nPrevious chapter:\n{prev_chapter_content}"
+    elif prev_chapters:
+        chapter_prompt += "\n\nPrevious chapters:\n"
+        for i, content in enumerate(prev_chapters, 1):
+            chapter_prompt += f"\nChapter {i}:\n{content}\n"
 
     message = anthropic.messages.create(
         model="claude-3-sonnet-20240229",
@@ -192,13 +206,13 @@ async def generate_new_chapter(db, story_id, chapter_number):
     # Get story details
     story_data = await get_story_details(db, story_id)
 
-    # Get previous chapter if needed
-    prev_chapter = None
+    # Get all previous chapters if needed
+    prev_chapters = None
     if chapter_number > 1:
-        prev_chapter = await get_previous_chapter(db, story_id, chapter_number)
+        prev_chapters = await get_all_previous_chapters(db, story_id, chapter_number)
 
     # Generate chapter content
-    content = await generate_chapter_content(story_data, chapter_number, prev_chapter)
+    content = await generate_chapter_content(story_data, chapter_number, prev_chapters)
 
     # For first chapter, generate and update title
     if chapter_number == 1:
