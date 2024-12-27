@@ -784,4 +784,71 @@ audio::-webkit-media-controls-time-remaining-display {
 
 .htmx-request .generate-all-btn .loading-indicator {
     display: flex;
+}
+
+.download-audiobook-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #9b59b6;  /* Purple color for download */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+    position: relative;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.download-audiobook-btn:hover {
+    background-color: #8e44ad;
+}
+
+.download-audiobook-btn .button-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.download-audiobook-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.download-audiobook-btn.loading .button-text {
+    visibility: hidden;
+}
+
+.download-audiobook-btn .loading-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #8e44ad;
+}
+
+.download-audiobook-btn.loading .loading-indicator {
+    display: flex;
+}
+
+#audiobook-container {
+    width: 100%;
+}
+
+#audiobook-container audio {
+    width: 100%;
+    margin: 0;
+}
+
+.audiobook-item {
+    margin-bottom: 20px;
+    padding: 0;
 } 

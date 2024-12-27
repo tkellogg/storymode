@@ -12,6 +12,8 @@ import story
 import storage
 import migrate_storage
 from io import BytesIO
+from pydub import AudioSegment
+import tempfile
 
 load_dotenv()
 nest_asyncio.apply()
@@ -145,11 +147,16 @@ async def get_chapters_list_endpoint(story_id):
     if chapters is None:
         return "Story not found", 404
 
+    # Check if audiobook exists
+    has_audiobook = storage.has_audiobook(story_id)
+    print(f"Checking audiobook for {story_id}: {has_audiobook}")
+
     return render_template(
         "chapters_list.html",
         story_id=story_id,
         chapters=chapters,
-        num_chapters=num_chapters
+        num_chapters=num_chapters,
+        has_audiobook=has_audiobook
     )
 
 @app.route("/api/stories/<story_id>/title", methods=["PUT"])
@@ -274,6 +281,84 @@ async def generate_all_endpoint(story_id):
     except Exception as e:
         print("Error in generate_all_endpoint:", e)
         raise
+
+@app.route("/api/stories/<story_id>/audiobook", methods=["POST"])
+async def generate_audiobook_endpoint(story_id):
+    try:
+        # Get all chapters
+        chapters, num_chapters = await chapter.get_chapters_list(db, story_id)
+        if not chapters:
+            return "No chapters found", 404
+
+        # Check if all chapters have audio
+        for chapter_num in range(1, num_chapters + 1):
+            if not storage.has_chapter_audio(story_id, chapter_num):
+                return "Not all chapters have audio generated", 400
+
+        print(f"Generating audiobook for story {story_id}")
+        
+        # Concatenate all audio files
+        combined = AudioSegment.empty()
+        for chapter_num in range(1, num_chapters + 1):
+            audio_bytes = storage.get_chapter_audio(story_id, chapter_num)
+            print(f"Adding chapter {chapter_num} audio ({len(audio_bytes)} bytes)")
+            
+            # Save bytes to temp file because pydub needs a file
+            with tempfile.NamedTemporaryFile(suffix='.mp3') as temp_file:
+                temp_file.write(audio_bytes)
+                temp_file.flush()
+                
+                # Load the audio and add it to combined
+                audio_segment = AudioSegment.from_mp3(temp_file.name)
+                if len(combined) > 0:
+                    # Add 1 second of silence between chapters
+                    combined += AudioSegment.silent(duration=1000)
+                combined += audio_segment
+
+        # Export combined audio to bytes
+        with tempfile.NamedTemporaryFile(suffix='.mp3') as temp_file:
+            combined.export(temp_file.name, format='mp3')
+            temp_file.seek(0)
+            final_audio_bytes = temp_file.read()
+
+        print(f"Saving audiobook ({len(final_audio_bytes)} bytes)")
+        # Save to disk
+        storage.save_audiobook(story_id, final_audio_bytes)
+
+        # Return audio player HTML
+        return render_template_string('''
+            <audio id="audiobook-player" controls>
+                <source src="/api/stories/{{ story_id }}/audiobook" type="audio/mp3">
+                Your browser does not support the audio element.
+            </audio>
+        ''', story_id=story_id)
+
+    except Exception as e:
+        print("Error creating audiobook:", e)
+        traceback.print_exc()
+        return f"Error creating audiobook: {str(e)}", 500
+
+@app.route("/api/stories/<story_id>/audiobook", methods=["GET"])
+async def get_audiobook_endpoint(story_id):
+    try:
+        audio_bytes = storage.get_audiobook(story_id)
+        if not audio_bytes:
+            return "Audiobook not found", 404
+
+        # Return as streamable audio
+        return send_file(
+            BytesIO(audio_bytes),
+            mimetype='audio/mp3'
+        )
+
+    except Exception as e:
+        print("Error serving audiobook:", e)
+        traceback.print_exc()
+        return f"Error serving audiobook: {str(e)}", 500
+
+@app.route('/favicon.ico')
+def favicon():
+    return app.send_static_file('images/favicon.png')
 
 if __name__ == "__main__":
     app.run(debug=True) 

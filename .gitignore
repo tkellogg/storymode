@@ -3,3 +3,4 @@ data/
 user_data/
 __pycache__/
 *.py[co]
+.DS_Store

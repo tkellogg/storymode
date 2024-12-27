@@ -71,9 +71,9 @@ document.addEventListener('click', function(e) {
 
 // Update chapter title when chapter is clicked
 document.addEventListener('click', function(e) {
-    const chapterItem = e.target.closest('.chapter-item');
-    if (chapterItem) {
-        const chapterNumber = chapterItem.querySelector('span').textContent.match(/\d+/)[0];
+    const chapterLink = e.target.closest('.chapter-link');
+    if (chapterLink) {
+        const chapterNumber = chapterLink.dataset.chapterNumber;
         document.getElementById('current-chapter-title').textContent = `Chapter ${chapterNumber}`;
     }
 });
@@ -114,5 +114,23 @@ function generateAudio() {
         loadingEl.classList.add('hidden');
     });
 }
+
+document.addEventListener('click', function(e) {
+    // Update active chapter
+    if (e.target.closest('.chapter-link')) {
+        const chapterItem = e.target.closest('.chapter-item');
+        const chapterNumber = e.target.closest('.chapter-link').dataset.chapterNumber;
+        
+        // Remove active class from all chapters
+        document.querySelectorAll('.chapter-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Add active class to clicked chapter
+        if (chapterItem) {
+            chapterItem.classList.add('active');
+        }
+    }
+});
 </script>
 {% endblock %} 

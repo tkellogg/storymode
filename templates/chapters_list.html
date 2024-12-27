@@ -1,3 +1,36 @@
+{% if chapters|length == num_chapters and chapters|length > 0 %}
+<div class="chapter-item audiobook-item">
+    <div id="audiobook-container">
+        {% if has_audiobook %}
+            <audio id="audiobook-player" controls>
+                <source src="/api/stories/{{ story_id }}/audiobook" type="audio/mp3">
+                Your browser does not support the audio element.
+            </audio>
+        {% else %}
+            <button id="download-audiobook-btn"
+                    hx-post="/api/stories/{{ story_id }}/audiobook"
+                    hx-target="#audiobook-container"
+                    class="download-audiobook-btn"
+                    _="on htmx:beforeRequest 
+                       add .loading to me
+                       on htmx:afterRequest
+                       remove .loading from me">
+                <span class="button-text">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                    </svg>
+                    Generate Full Audiobook
+                </span>
+                <div class="loading-indicator htmx-indicator">
+                    <div class="spinner"></div>
+                    <span>Generating audiobook...</span>
+                </div>
+            </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 {% if chapters|length < num_chapters %}
 <div class="chapter-item">
     <button id="generate-all-btn"
@@ -23,7 +56,8 @@
         <a href="#" 
            hx-get="/api/stories/{{ story_id }}/chapters/{{ chapter.chapter_number }}"
            hx-target="#chapter-content"
-           class="chapter-link">
+           class="chapter-link"
+           data-chapter-number="{{ chapter.chapter_number }}">
             Chapter {{ chapter.chapter_number }}
         </a>
         <button class="redo-btn"

@@ -8,9 +8,15 @@ def get_user_data_dir() -> Path:
     data_dir.mkdir(parents=True, exist_ok=True)
     return data_dir
 
+def get_story_dir(story_id: str) -> Path:
+    """Get the directory for a specific story, creating it if it doesn't exist."""
+    story_dir = get_user_data_dir() / 'story' / story_id
+    story_dir.mkdir(parents=True, exist_ok=True)
+    return story_dir
+
 def get_chapter_dir(story_id: str, chapter_number: int) -> Path:
     """Get the directory for a specific chapter, creating it if it doesn't exist."""
-    chapter_dir = get_user_data_dir() / 'story' / story_id / 'chapter' / str(chapter_number)
+    chapter_dir = get_story_dir(story_id) / 'chapter' / str(chapter_number)
     chapter_dir.mkdir(parents=True, exist_ok=True)
     return chapter_dir
 
@@ -48,4 +54,28 @@ def get_chapter_audio(story_id: str, chapter_number: int) -> Optional[bytes]:
 
 def has_chapter_audio(story_id: str, chapter_number: int) -> bool:
     """Check if chapter has audio file."""
-    return get_chapter_audio_path(story_id, chapter_number).exists() 
+    return get_chapter_audio_path(story_id, chapter_number).exists()
+
+def get_audiobook_path(story_id: str) -> Path:
+    """Get the path to the audiobook file."""
+    return get_story_dir(story_id) / "audiobook.mp3"
+
+def has_audiobook(story_id: str) -> bool:
+    """Check if an audiobook exists for this story."""
+    path = get_audiobook_path(story_id)
+    exists = path.exists()
+    print(f"Checking audiobook at {path}: {exists}")
+    return exists
+
+def save_audiobook(story_id: str, audio_data: bytes) -> None:
+    """Save the audiobook to disk."""
+    path = get_audiobook_path(story_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(audio_data)
+
+def get_audiobook(story_id: str) -> Optional[bytes]:
+    """Get the audiobook data if it exists."""
+    path = get_audiobook_path(story_id)
+    if path.exists():
+        return path.read_bytes()
+    return None 
